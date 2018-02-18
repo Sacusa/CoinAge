@@ -1,6 +1,7 @@
 package com.mycompany.coinage;
 
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class Stock  {
   private final String symbol;
   
   /** dateTime represents the date and time the object contains information for. */
-  private final String dateTime;
+  private final GregorianCalendar dateTime;
   
   /** values contains the detailed information about the stock. */
   private final Map<String, Double> values;
@@ -31,9 +32,9 @@ public class Stock  {
    *                 be accessible using the strings "open", "high", "low", "close" and "volume"
    *                 respectively.
    */
-  public Stock(String symbol, String dateTime, Map<String, Double> values) {
+  public Stock(String symbol, GregorianCalendar dateTime, Map<String, Double> values) {
     this.symbol = symbol;
-    this.dateTime = dateTime;
+    this.dateTime = (GregorianCalendar) dateTime.clone();
     this.values = new HashMap<>();
 
     // load stock value from 'values' if it contains the key. Else, set that value to 0.
@@ -73,8 +74,8 @@ public class Stock  {
    * 
    * @return dateTime 
    */
-  public String getDateTime() {
-    return dateTime;
+  public GregorianCalendar getDateTime() {
+    return (GregorianCalendar) dateTime.clone();
   }
   
 }
