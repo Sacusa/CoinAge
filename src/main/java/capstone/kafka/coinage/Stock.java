@@ -1,4 +1,4 @@
-package com.mycompany.coinage;
+package capstone.kafka.coinage;
 
 import java.util.Arrays;
 import java.util.GregorianCalendar;
@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
-* The information about an individual stock at a particular time instance is stored in this class.
-* Objects of this class are immutable. Consequently, only getter methods are present.
-* 
-* @author tanmaypatil
-*/
+ * The information about an individual stock at a particular time instance is stored in this class.
+ * Objects of this class are immutable. Consequently, only getter methods are present.
+ * 
+ * @author tanmaypatil
+ */
 public class Stock  {
   /** symbol contains the stock symbol. For example, Microsoft symbol will be "MSFT". */
   private final String symbol;
@@ -76,6 +76,16 @@ public class Stock  {
    */
   public GregorianCalendar getDateTime() {
     return (GregorianCalendar) dateTime.clone();
+  }
+  
+  @Override
+  public String toString() {
+    String stringValue = symbol + ";" + dateTime.getTimeInMillis();
+    
+    for (String key : values.keySet()) {
+      stringValue += ";" + key + ":" + values.get(key);
+    }
+    return stringValue;
   }
   
 }

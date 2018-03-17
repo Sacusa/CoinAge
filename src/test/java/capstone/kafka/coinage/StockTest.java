@@ -1,11 +1,11 @@
-package com.mycompany.coinage;
+package capstone.kafka.coinage;
 
 import static org.junit.Assert.assertEquals;
 
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class StockTest {
   
@@ -23,7 +23,7 @@ public class StockTest {
   Map<String, Double> values = new HashMap<>();
   
   /**
-   * Passess all the required values in the map 'values' to the constructor.
+   * Passes all the required values in the map 'values' to the constructor.
    * Tests all the getter methods.
    */
   @Test
@@ -45,7 +45,7 @@ public class StockTest {
   }
   
   /**
-   * Passess some of the required values in the map 'values' to the constructor.
+   * Passes some of the required values in the map 'values' to the constructor.
    * Tests all the getter methods.
    */
   @Test
@@ -68,7 +68,7 @@ public class StockTest {
   }
   
   /**
-   * Passess some of the required values, along with some extra values, in the map 'values' to the
+   * Passes some of the required values, along with some extra values, in the map 'values' to the
    * constructor.
    * Tests all the getter methods.
    */
