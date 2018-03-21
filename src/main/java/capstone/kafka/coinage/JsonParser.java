@@ -30,6 +30,17 @@ public class JsonParser {
    * @param args Describe this.
    * @throws IOException Describe this.
    */
+    
+  HashMap<String, String> typeMap = new HashMap<String, String>();
+  
+  public JsonParser()
+  {
+      typeMap.put("TIME_SERIES_MONTHLY", "Monthly Time Series");
+      typeMap.put("TIME_SERIES_INTRADAY", "Time Series (1min)");
+      typeMap.put("TIME_SERIES_DAILY","Time Series (Daily)");
+      typeMap.put("TIME_SERIES_WEEKLY","Weekly Time Series");
+  }
+  
   public static void main(String [] args) throws IOException {
     String request = "https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&symbol=MSFT&interval=5min&outputsize=compact&apikey=XS1YCFU15GDN1O6T";
     JsonParser p = new JsonParser();
@@ -38,22 +49,27 @@ public class JsonParser {
   
   /**
    * Describe this.
-   * @param request Describe this.
-   * @param symbol Describe this.
-   * @return Describe this.
+   * @param request : This is the url for requesting the json for a particular Symbol.
+   * @param symbol : Symbol for a the stock.
+   * @return stockList A ArrayList of the request stock containing the monthly stock details.
    * @throws IOException Describe this.
    */
   
   public List<Stock> getLatestStock(String request,String symbol) throws IOException {
+    //ArrayList containging the stock information
     List<Stock> stockList = new ArrayList<Stock>();
+    //Requesting json data for a particular stock
     JSONObject json = readJsonFromUrl(request);
-    JSONObject j = json.getJSONObject("Monthly Time Series");
-    Iterator<String> s = j.keys(); 
-    while(s.hasNext())
+    //Extracting Monthly data of the stock
+    String type = request.substring(request.indexOf("=")+1,request.indexOf("&"));
+    JSONObject MonthlyTimeSeries = json.getJSONObject(typeMap.get(type));
+    //Iterator on the keys of the json object
+    Iterator<String> MonthlyTimeSeriesKeys = MonthlyTimeSeries.keys(); 
+    while(MonthlyTimeSeriesKeys.hasNext())
     {
         try{
-            String date = s.next().toString();
-            JSONObject k = j.getJSONObject(date);
+            String date = MonthlyTimeSeriesKeys.next().toString();
+            JSONObject k = MonthlyTimeSeries.getJSONObject(date);
             Double open = new Double(k.getString("1. open"));
             Double close = new Double(k.getString("4. close"));
             Double high = new Double(k.getString("2. high"));
@@ -79,8 +95,8 @@ public class JsonParser {
   }
   
   /**
-   * Describe this.
-   * @param rd Describe this.
+   * This function reads a buffered reader, an converts it into a string.
+   * @param rd Buffered Reader.
    * @return Describe this.
    * @throws IOException Describe this.
    */
@@ -95,9 +111,9 @@ public class JsonParser {
   }
 
   /**
-   * Describe this.
-   * @param url Describe this.
-   * @return Describe this.
+   * Returns JSON object from the url provided.
+   * @param url Requested URL.
+   * @return returns JSON object.
    * @throws IOException Describe this.
    * @throws JSONException Describe this.
    */

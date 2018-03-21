@@ -41,13 +41,17 @@ public class StockDataProducer {
 
   public static void main(String[] args) {
     StockDataProducer p = new StockDataProducer(Arrays.asList("MSFT", "GOOG"),
-            Arrays.asList("MONTHLY"), 1, "XS1YCFU15GDN1O6T");
+            Arrays.asList("INTRADAY", "MONTHLY"), 1, "XS1YCFU15GDN1O6T");
     p.downloadStockData();
 
-    System.out.println("==== MSFT ====");
+    System.out.println("==== MSFT (INTRADAY) ====");
+    System.out.println(p.getStockValues("MSFT_INTRADAY").size());
+    System.out.println("==== MSFT (MONTHLY) ====");
     System.out.println(p.getStockValues("MSFT_MONTHLY").size());
 
-    System.out.println("==== GOOG ====");
+    System.out.println("==== GOOG (INTRADAY) ====");
+    System.out.println(p.getStockValues("GOOG_INTRADAY").size());
+    System.out.println("==== GOOG (MONTHLY) ====");
     System.out.println(p.getStockValues("GOOG_MONTHLY").size());
     
     p.pushStockData();
@@ -146,9 +150,6 @@ public class StockDataProducer {
    * @return A List&lt;Stock&lt; object containing the stock values in increasing time instance.
    */
   public List<Stock> getStockValues(String stockSymbol) {
-    if (stockValues.containsKey(stockSymbol)) {
-      return new ArrayList<>(stockValues.get(stockSymbol));
-    }
-    return new ArrayList<>();
+    return stockValues.getOrDefault(stockSymbol, new ArrayList<>());
   }
 }
