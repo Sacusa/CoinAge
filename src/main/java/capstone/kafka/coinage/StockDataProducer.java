@@ -38,24 +38,15 @@ public class StockDataProducer {
 
   // API key for AlphaVantage API.
   private final String apiKey;
+  
+  // Boolean to stop the background producer thread.
+  private boolean runProducerThread;
 
   public static void main(String[] args) {
     StockDataProducer p = new StockDataProducer(Arrays.asList("MSFT", "GOOG"),
             Arrays.asList("INTRADAY", "MONTHLY"), 1, "XS1YCFU15GDN1O6T");
-    p.downloadStockData();
-
-    System.out.println("==== MSFT (INTRADAY) ====");
-    System.out.println(p.getStockValues("MSFT_INTRADAY").size());
-    System.out.println("==== MSFT (MONTHLY) ====");
-    System.out.println(p.getStockValues("MSFT_MONTHLY").size());
-
-    System.out.println("==== GOOG (INTRADAY) ====");
-    System.out.println(p.getStockValues("GOOG_INTRADAY").size());
-    System.out.println("==== GOOG (MONTHLY) ====");
-    System.out.println(p.getStockValues("GOOG_MONTHLY").size());
     
-    p.pushStockData();
-    System.out.println("Data sent");
+    p.runProducerThread();
   }
 
   /**
@@ -74,6 +65,7 @@ public class StockDataProducer {
     this.timeSeries = new ArrayList<>(timeSeries);
     this.interval = interval;
     this.apiKey = apiKey;
+    this.runProducerThread = false;
   }
   
   /**
@@ -96,11 +88,25 @@ public class StockDataProducer {
             "org.apache.kafka.common.serialization.StringSerializer");
     return new KafkaProducer<>(producerProperties);
   }
+  
+  public void runProducerThread() {
+    runProducerThread = true;
+    
+    new Thread() {
+      public void run() {
+        while (runProducerThread) {
+          downloadStockData();
+          pushStockData();
+          System.out.println("Data updated.");
+        }
+      }
+    }.start();
+  }
 
   /**
    * Updates the value list for each stock symbol.
    */
-  public void downloadStockData() {
+  private void downloadStockData() {
     for (String symbol : symbols) {
       for (String time : timeSeries) {
         // prepare the AlphaVantage API query string
@@ -125,7 +131,7 @@ public class StockDataProducer {
           Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        stockValues.put(symbol + "_" + time, apiResponse);
+        stockValues.put(symbol + "-" + time, apiResponse);
       }
     }
   }
@@ -133,14 +139,18 @@ public class StockDataProducer {
   /**
    * Pushes the current stock data into Kafka.
    */
-  public void pushStockData() {
+  private void pushStockData() {
     for (String symbol : symbols) {
       for (String time : timeSeries) {
-        String stock = symbol + "_" + time;
-        kafkaProducer.send(new ProducerRecord<>(stock + "_INPUT",
+        String stock = symbol + "-" + time;
+        kafkaProducer.send(new ProducerRecord<>(stock + "-INPUT", stock,
                 stockValues.get(stock).toString()));
       }
     }
+  }
+  
+  public void stopProducerThread() {
+    runProducerThread = false;
   }
 
   /**
