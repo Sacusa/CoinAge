@@ -26,7 +26,7 @@ public class StockDataConsumer {
 
   // Map from symbols to an ordered list of values.
   private final Map<String, List<Stock>> stockValues;
-  
+
   // Boolean to stop the background consumer thread.
   private boolean runConsumerThread;
 
@@ -34,8 +34,15 @@ public class StockDataConsumer {
     List<String> stocks = Arrays.asList("MSFT", "GOOG");
     List<String> timeSeries = Arrays.asList("INTRADAY", "MONTHLY");
     StockDataConsumer testData = new StockDataConsumer(stocks, timeSeries);
-    
+
     testData.runConsumerThread();
+
+    List<Stock> s = testData.getStockValues("MSFT-INTRADAY");
+    while (s.isEmpty()) {
+      s = testData.getStockValues("MSFT-INTRADAY");
+    }
+    testData.stopConsumerThread();
+    System.out.println(s.get(s.size() - 1).getValues().get("open"));
   }
 
   /**
@@ -80,11 +87,12 @@ public class StockDataConsumer {
             "org.apache.kafka.common.serialization.StringDeserializer");
     return new KafkaConsumer<>(consumerProperties);
   }
-  
+
   public void runConsumerThread() {
     runConsumerThread = true;
-    
+
     new Thread() {
+      @Override
       public void run() {
         while (runConsumerThread) {
           pullStockData();
@@ -98,24 +106,17 @@ public class StockDataConsumer {
    */
   private void pullStockData() {
     ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
-    
-    int recordCount = records.count();
-    if (recordCount != 0)
-      System.out.println("Pulled size = " + recordCount);
+
+//    int recordCount = records.count();
+//    if (recordCount != 0) {
+//      System.out.println("Pulled size = " + recordCount);
+//    }
 
     for (ConsumerRecord<String, String> record : records) {
       //System.out.println("record: " + record);
       String symbol = record.key();
 
-      // Clear old data
-      List<Stock> stockData;
-      if (stockValues.containsKey(symbol)) {
-        stockData = stockValues.get(symbol);
-        stockData.clear();
-      } else {
-        stockData = new ArrayList<>();
-        stockValues.put(symbol, stockData);
-      }
+      List<Stock> stockData = new ArrayList<>();
 
       // Sequentially process each stock entry
       String recordValue = record.value().substring(1, record.value().length() - 1);
@@ -144,9 +145,14 @@ public class StockDataConsumer {
         // Add new data into the list
         stockData.add(new Stock(symbol, stockDateTime, stockDataValues));
       }
+      
+      // Update stock values
+      synchronized (stockValues) {
+        stockValues.put(symbol, stockData);
+      }
     }
   }
-  
+
   public void stopConsumerThread() {
     runConsumerThread = false;
   }
@@ -158,7 +164,11 @@ public class StockDataConsumer {
    * @return A List&lt;Stock&lt; object containing the stock values in increasing time instance.
    */
   public List<Stock> getStockValues(String stockSymbol) {
-    return stockValues.getOrDefault(stockSymbol, new ArrayList<>());
+    List<Stock> returnValue;
+    synchronized (stockValues) {
+      returnValue = stockValues.getOrDefault(stockSymbol, new ArrayList<>());
+    }
+    return returnValue;
   }
 
 }

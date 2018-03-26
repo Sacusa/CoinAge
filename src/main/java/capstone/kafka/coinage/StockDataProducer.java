@@ -3,10 +3,12 @@ package capstone.kafka.coinage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -46,7 +48,7 @@ public class StockDataProducer {
     StockDataProducer p = new StockDataProducer(Arrays.asList("MSFT", "GOOG"),
             Arrays.asList("INTRADAY", "MONTHLY"), 1, "XS1YCFU15GDN1O6T");
     
-    p.runProducerThread();
+    p.runDemoThread();
   }
 
   /**
@@ -93,6 +95,7 @@ public class StockDataProducer {
     runProducerThread = true;
     
     new Thread() {
+      @Override
       public void run() {
         while (runProducerThread) {
           downloadStockData();
@@ -149,17 +152,58 @@ public class StockDataProducer {
     }
   }
   
+  public void runDemoThread() {
+    runProducerThread = true;
+    
+    new Thread() {
+      @Override
+      public void run() {
+        while (runProducerThread) {
+          prepareSampleData();
+          pushStockData();
+          System.out.println("Data updated.");
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException ex) {
+            Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+          }
+        }
+      }
+    }.start();
+  }
+  
+  private void prepareSampleData() {
+    for (String symbol : symbols) {
+      for (String time : timeSeries) {
+        List<Stock> sampleData = new ArrayList<>();
+        
+        for (int i = 0; i < 10; ++i) {
+          GregorianCalendar gc = null;
+          if (time.equals("INTRADAY")) {
+            gc = new GregorianCalendar(2018, 3, 28, i, i);
+          }
+          else {
+            gc = new GregorianCalendar(2018, 3, 28);
+          }
+          
+          Random r = new Random();
+          Map<String, Double> v = new HashMap<>();
+          v.put("open", r.nextDouble());
+          v.put("close", r.nextDouble());
+          v.put("high", r.nextDouble());
+          v.put("low", r.nextDouble());
+          v.put("volume", r.nextDouble());
+          
+          Stock s = new Stock(symbol, gc, v);
+          sampleData.add(s);
+        }
+        
+        stockValues.put(symbol + "-" + time, sampleData);
+      }
+    }
+  }
+  
   public void stopProducerThread() {
     runProducerThread = false;
-  }
-
-  /**
-   * Returns the list of stock values for the provided symbol.
-   *
-   * @param stockSymbol The stock symbol to return the values for.
-   * @return A List&lt;Stock&lt; object containing the stock values in increasing time instance.
-   */
-  public List<Stock> getStockValues(String stockSymbol) {
-    return stockValues.getOrDefault(stockSymbol, new ArrayList<>());
   }
 }
