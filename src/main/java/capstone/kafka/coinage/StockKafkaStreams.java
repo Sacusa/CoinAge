@@ -14,23 +14,23 @@ import org.apache.kafka.streams.Topology;
 
 /**
  * This class handles Kafka topology, connecting input streams to output streams.
- * 
+ *
  * @author Sudhanshu Gupta
  */
 public class StockKafkaStreams {
-  
+
   // This object represents the created network topology.
   private final KafkaStreams stockStreams;
-  
+
   public static void main(String[] args) {
-    StockKafkaStreams stockStreams = new StockKafkaStreams(Arrays.asList("MSFT, GOOG"),
-            Arrays.asList("MONTHLY"));
+    StockKafkaStreams stockStreams = new StockKafkaStreams(Arrays.asList("MSFT", "GOOG"),
+            Arrays.asList("INTRADAY", "MONTHLY"));
     stockStreams.run();
   }
-  
+
   /**
    * Initialize a Kafka topology for the given 'symbols' and 'timeSeries'.
-   * 
+   *
    * @param symbols The symbols for which the topics will be connected.
    * @param timeSeries The time series' for which the topics will be connected.
    */
@@ -40,12 +40,12 @@ public class StockKafkaStreams {
     props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-
+    
     // Build stream topology into a StreamsBuilder object
     final StreamsBuilder builder = new StreamsBuilder();
     for (String symbol : symbols) {
-      for (String time: timeSeries) {
-        builder.stream(symbol + "_" + time + "_INPUT").to(symbol + "_" + time + "_OUTPUT");
+      for (String time : timeSeries) {
+        builder.stream(symbol + "-" + time + "-INPUT").to(symbol + "-" + time + "-OUTPUT");
       }
     }
 
@@ -53,7 +53,7 @@ public class StockKafkaStreams {
     final Topology topology = builder.build();
     stockStreams = new KafkaStreams(topology, props);
   }
-  
+
   /**
    * Run the created streams.
    */
@@ -77,5 +77,5 @@ public class StockKafkaStreams {
       Logger.getLogger(StockKafkaStreams.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
-  
+
 }

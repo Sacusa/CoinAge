@@ -80,7 +80,7 @@ public class Stock  {
   
   @Override
   public String toString() {
-    String stringValue = symbol + ";" + dateTime.getTimeInMillis();
+    String stringValue = "symbol:" + symbol + ";" + "timems:" + dateTime.getTimeInMillis();
     
     for (String key : values.keySet()) {
       stringValue += ";" + key + ":" + values.get(key);
