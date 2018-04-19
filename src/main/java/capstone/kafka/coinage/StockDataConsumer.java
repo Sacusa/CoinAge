@@ -10,6 +10,7 @@ import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import java.io.FileWriter;  
 
 /**
  * Consumes stock data from Kafka and restores it in the order created by the producer.
@@ -40,8 +41,67 @@ public class StockDataConsumer {
     while (s.isEmpty()) {
       s = testData.getStockValues("MSFT-INTRADAY");
     }
-    testData.stopConsumerThread();
+    if (!s.isEmpty())
+    {
+    //UPDATE DATA
+    }
+    while(true){
+ 
     System.out.println(s.get(s.size() - 1).getValues().get("open"));
+    System.out.println(s.get(s.size() - 1).getValues().get("low"));
+    try{    
+           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values1.txt");    
+           fw.write(s.get(s.size() - 1).getValues().get("open").toString());    
+           fw.close();
+           
+          }catch(Exception e){System.out.println(e);}    
+          System.out.println("Success...1");  
+          
+          try{    
+           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values2.txt");    
+           fw.write(s.get(s.size() - 1).getValues().get("low").toString());    
+           fw.close();
+           
+          }catch(Exception e){System.out.println(e);}    
+          System.out.println("Success...2"); 
+          
+          try{    
+           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values3.txt");    
+           fw.write(s.get(s.size() - 1).getValues().get("high").toString());    
+           fw.close();
+           
+          }catch(Exception e){System.out.println(e);}    
+          System.out.println("Success...3"); 
+          
+    try{    
+           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values4.txt");    
+           fw.write(s.get(s.size() - 1).getValues().get("close").toString());    
+           fw.close();
+           
+          }catch(Exception e){System.out.println(e);}    
+          System.out.println("Success...4"); 
+          
+          try{    
+           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values5.txt");    
+           fw.write(s.get(s.size() - 1).getValues().get("volume").toString());    
+           fw.close();
+           
+          }catch(Exception e){System.out.println(e);}    
+          System.out.println("Success...5"); 
+          
+         
+          
+          
+    }
+          
+          
+          
+         
+    
+    
+    //   testData.stopConsumerThread();
+    
+    
   }
 
   /**
@@ -86,11 +146,12 @@ public class StockDataConsumer {
             "org.apache.kafka.common.serialization.StringDeserializer");
     return new KafkaConsumer<>(consumerProperties);
   }
-  
+
   public void runConsumerThread() {
     runConsumerThread = true;
-    
+
     new Thread() {
+      @Override
       public void run() {
         while (runConsumerThread) {
           pullStockData();

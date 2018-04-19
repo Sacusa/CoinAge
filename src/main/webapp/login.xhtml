@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+     <h:outputStylesheet name="css/Style.css"/>
+<h:head>
+        <title>Login</title>
+    </h:head>
+    <h:body>
+        <div class="container">
+        <div class="card card-container">
+            <div class="alert alert-warning" style="visibility:#{login.err}">
+  
+                <strong> <h:outputText value="#{login.out}"/></strong>
+</div><br/>
+            <img id="profile-img" class="profile-img-card" src="https://logoeps.com/wp-content/uploads/2013/03/java-eps-vector-logo-200x200.png" />
+            <p id="profile-name" class="profile-name-card"></p>
+            <h:form class="form-signin" id="myFrom">
+                
+                			
+                
+                <h:panelGrid columns="3">
+				<h:outputText  value="Username : "/>
+				<h:inputText class="form-control" value="#{login.user}"/>
+                                <h:message for="username"></h:message>
+				<h:outputText value="Password : "/>
+				<h:inputText class="form-control" value="#{login.pwd}"/>
+                                <h:message for="password"></h:message>
+                                
+			</h:panelGrid>
+                <h:commandButton class="btn btn-lg btn-primary btn-block btn-signin" value="Login" action="#{login.validateUsernamePassword}"></h:commandButton>
+            </h:form><!-- /form --><br/>
+           
+           
+            <a href="Reg.xhtml" class="forgot-password">
+                Register user
+            </a>
+        </div><!-- /card-container -->
+    </div>
+    </h:body>
+</html>
