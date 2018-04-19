@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+     <h:outputStylesheet name="css/Style.css"/>
+<h:head>
+        <title>Registeration</title>
+    </h:head>
+    <h:body>
+        <div class="container">
+            <div class="card card-container" style="max-width: 423px;">
+            <div class="alert alert-warning" style="">
+  
+                <strong> <h:outputText value="#{regUser.out}"/></strong>
+</div><br/>
+            <img id="profile-img" class="profile-img-card" src="https://logoeps.com/wp-content/uploads/2013/03/java-eps-vector-logo-200x200.png" />
+            <p id="profile-name" class="profile-name-card"></p>
+            <h:form class="form-signin" id="myFrom">
+                
+                			
+                
+                <h:panelGrid columns="3">
+				<h:outputText  value="Username : "/>
+                                <h:inputText class="form-control" value="#{regUser.userName}"/>
+                                <h:message for="username"></h:message>
+				<h:outputText value="Password : "/>
+                                <h:inputText class="form-control" value="#{regUser.passwd}"/><br/>
+                                <h:outputText value="Re-Password :"/>
+                                <h:inputText class="form-control" value="#{regUser.repass}"/>
+                                <h:message for="password"></h:message>
+                                
+			</h:panelGrid>
+              <!--  <h:commandButton class="btn btn-lg btn-primary btn-block btn-signin" value="Register user" action="" ></h:commandButton>-->
+                  <h:commandButton class="btn btn-lg btn-primary btn-block btn-signin" value="Login" action="#{regUser.validateUsernamePassword}"></h:commandButton>
+            </h:form><!-- /form --><br/>
+            
+           
+            <a href="login.xhtml" class="forgot-password">
+                Login Page
+            </a>
+        </div><!-- /card-container -->
+    </div>
+    </h:body>
+</html>

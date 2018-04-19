@@ -173,6 +173,7 @@ public class StockDataProducer {
   }
   
   private void prepareSampleData() {
+    Random r = new Random(System.currentTimeMillis());
     for (String symbol : symbols) {
       for (String time : timeSeries) {
         List<Stock> sampleData = new ArrayList<>();
@@ -186,7 +187,6 @@ public class StockDataProducer {
             gc = new GregorianCalendar(2018, 3, 28);
           }
           
-          Random r = new Random();
           Map<String, Double> v = new HashMap<>();
           v.put("open", r.nextDouble());
           v.put("close", r.nextDouble());
