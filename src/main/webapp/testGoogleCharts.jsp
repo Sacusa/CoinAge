@@ -23,8 +23,6 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-  </head>
-  <body>
     <%!
       private Producer getKafkaProducer() {
         Properties producerProperties = new Properties();
@@ -38,7 +36,7 @@
                 "org.apache.kafka.common.serialization.StringSerializer");
         producerProperties.put("value.serializer",
                 "org.apache.kafka.common.serialization.StringSerializer");
-        return new KafkaProducer<String,String>(producerProperties);
+        return new KafkaProducer<String, String>(producerProperties);
       }
 
       private Consumer getKafkaConsumer() {
@@ -52,7 +50,7 @@
                 "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProperties.put("value.deserializer",
                 "org.apache.kafka.common.serialization.StringDeserializer");
-        return new KafkaConsumer<String,String>(consumerProperties);
+        return new KafkaConsumer<String, String>(consumerProperties);
       }
 
       private void sendRequest(Producer kafkaProducer, String username) {
@@ -78,7 +76,6 @@
             }
           }
         }*/
-
         return response;
       }
 
@@ -96,42 +93,67 @@
     %>
 
     <%
-      String username = (String) session.getAttribute("username");
+      //String username = (String) session.getAttribute("username");
+      String username = "mama";
       List<String> stocks = getStocks(username);
       StockDataConsumer consumer = new StockDataConsumer(stocks,
               Arrays.asList("INTRADAY", "DAILY", "WEEKLY", "MONTHLY"));
       consumer.runConsumerThread();
       String time = request.getParameter("time").toUpperCase();
     %>
-    <table>
-      <tr>
-        <th>Stock</th>
-        <th>Open</th>
-        <th>Close</th>
-        <th>High</th>
-        <th>Low</th>
-        <th>Volume</th>
-      </tr>
-      <%
-        for (String stock : stocks) {
-          String symbol = stock + "-" + time;
-          List<Stock> stockData = consumer.getStockValues(symbol);
-          while (stockData.isEmpty()) {
-            stockData = consumer.getStockValues(symbol);
-          }
-          Map<String, Double> latestStockValues = stockData.get(stockData.size() - 1).getValues();
-      %>
-      <tr>
-        <td><%= stock %></td>
-        <td><%= latestStockValues.get("open") %></td>
-        <td><%= latestStockValues.get("close") %></td>
-        <td><%= latestStockValues.get("high") %></td>
-        <td><%= latestStockValues.get("low") %></td>
-        <td><%= latestStockValues.get("volume") %></td>
-      </tr>
-      <%
-        }
-      %>
-    </table>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages': ['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Time', 'Open', 'Close', 'High', 'Low', 'Volume'],
+          <%
+            String symbol = stocks.get(0) + "-" + time;
+            List<Stock> stockData = consumer.getStockValues(symbol);
+            while (stockData.isEmpty()) {
+              stockData = consumer.getStockValues(symbol);
+            }
+
+            int iterEnd = stockData.size() - 1, index = 0;
+            for (; index < iterEnd; index++) {
+              Map<String, Double> stockValues = stockData.get(index).getValues();
+          %>
+          [
+            <%= index %>,
+            parseFloat(<%= stockValues.get("open") %>),
+            parseFloat(<%= stockValues.get("close") %>),
+            parseFloat(<%= stockValues.get("high") %>),
+            parseFloat(<%= stockValues.get("low") %>),
+            parseFloat(<%= stockValues.get("volume") %>)
+          ],
+          <%
+            }
+            Map<String, Double> stockValues = stockData.get(index).getValues();
+          %>
+          [
+            <%= index %>,
+            parseFloat(<%= stockValues.get("open") %>),
+            parseFloat(<%= stockValues.get("close") %>),
+            parseFloat(<%= stockValues.get("high") %>),
+            parseFloat(<%= stockValues.get("low") %>),
+            parseFloat(<%= stockValues.get("volume") %>)
+          ]
+        ]);
+
+        var options = {
+          title: 'Company Performance',
+          curveType: 'line',
+          legend: {position: 'bottom'}
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="curve_chart" style="width: 900px; height: 500px"></div>
   </body>
 </html>
