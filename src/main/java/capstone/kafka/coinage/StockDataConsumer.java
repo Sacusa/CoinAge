@@ -1,5 +1,6 @@
 package capstone.kafka.coinage;
 
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
@@ -7,10 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import java.io.FileWriter;  
 
 /**
  * Consumes stock data from Kafka and restores it in the order created by the producer.
@@ -27,81 +30,50 @@ public class StockDataConsumer {
 
   // Map from symbols to an ordered list of values.
   private final Map<String, List<Stock>> stockValues;
+
   // Boolean to stop the background consumer thread.
   private boolean runConsumerThread;
+  
+  private static long consumerCount = 0;
 
   public static void main(String[] args) {
     List<String> stocks = Arrays.asList("MSFT", "GOOG");
     List<String> timeSeries = Arrays.asList("INTRADAY", "MONTHLY");
-    StockDataConsumer testData = new StockDataConsumer(stocks, timeSeries);
+    StockDataConsumer t1 = new StockDataConsumer(stocks, timeSeries);
+    StockDataConsumer t2 = new StockDataConsumer(stocks, timeSeries);
+    StockDataConsumer t3 = new StockDataConsumer(stocks, timeSeries);
 
-    testData.runConsumerThread();
+    t1.runConsumerThread();
+    t2.runConsumerThread();
+    t3.runConsumerThread();
+    
 
-    List<Stock> s = testData.getStockValues("MSFT-INTRADAY");
-    while (s.isEmpty()) {
-      s = testData.getStockValues("MSFT-INTRADAY");
+    while (true) {
+      List<Stock> s;
+      
+      s = t1.getStockValues("MSFT-INTRADAY");
+      while (s.isEmpty()) {
+        s = t1.getStockValues("MSFT-INTRADAY");
+      }
+      
+      s = t2.getStockValues("MSFT-INTRADAY");
+      while (s.isEmpty()) {
+        s = t2.getStockValues("MSFT-INTRADAY");
+      }
+      
+      s = t3.getStockValues("MSFT-INTRADAY");
+      while (s.isEmpty()) {
+        s = t3.getStockValues("MSFT-INTRADAY");
+      }
+      
+      System.out.println("OK");
+      
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException ex) {
+        Logger.getLogger(StockDataConsumer.class.getName()).log(Level.SEVERE, null, ex);
+      }
     }
-    if (!s.isEmpty())
-    {
-    //UPDATE DATA
-    }
-    while(true){
- 
-    System.out.println(s.get(s.size() - 1).getValues().get("open"));
-    System.out.println(s.get(s.size() - 1).getValues().get("low"));
-    try{    
-           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values1.txt");    
-           fw.write(s.get(s.size() - 1).getValues().get("open").toString());    
-           fw.close();
-           
-          }catch(Exception e){System.out.println(e);}    
-          System.out.println("Success...1");  
-          
-          try{    
-           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values2.txt");    
-           fw.write(s.get(s.size() - 1).getValues().get("low").toString());    
-           fw.close();
-           
-          }catch(Exception e){System.out.println(e);}    
-          System.out.println("Success...2"); 
-          
-          try{    
-           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values3.txt");    
-           fw.write(s.get(s.size() - 1).getValues().get("high").toString());    
-           fw.close();
-           
-          }catch(Exception e){System.out.println(e);}    
-          System.out.println("Success...3"); 
-          
-    try{    
-           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values4.txt");    
-           fw.write(s.get(s.size() - 1).getValues().get("close").toString());    
-           fw.close();
-           
-          }catch(Exception e){System.out.println(e);}    
-          System.out.println("Success...4"); 
-          
-          try{    
-           FileWriter fw=new FileWriter("C:/Users/Akshat/Desktop/CoinAge-UI/JSF_Login_Logout/web/DATA/values5.txt");    
-           fw.write(s.get(s.size() - 1).getValues().get("volume").toString());    
-           fw.close();
-           
-          }catch(Exception e){System.out.println(e);}    
-          System.out.println("Success...5"); 
-          
-         
-          
-          
-    }
-          
-          
-          
-         
-    
-    
-    //   testData.stopConsumerThread();
-    
-    
   }
 
   /**
@@ -113,7 +85,7 @@ public class StockDataConsumer {
   public StockDataConsumer(List<String> symbols, List<String> timeSeries) {
     this.kafkaConsumer = getKafkaConsumer();
     this.symbols = new ArrayList<>();
-    this.stockValues = new HashMap<>();
+    this.stockValues = new ConcurrentHashMap<>();
     this.runConsumerThread = false;
 
     // Subscribe to the required topics
@@ -136,28 +108,19 @@ public class StockDataConsumer {
   private KafkaConsumer getKafkaConsumer() {
     Properties consumerProperties = new Properties();
     consumerProperties.put("bootstrap.servers", "localhost:9092");
-    consumerProperties.put("group.id", "stock-consumer");
+    consumerProperties.put("group.id", "stock-consumer-" + StockDataConsumer.consumerCount);
     consumerProperties.put("enable.auto.commit", "true");
-    consumerProperties.put("auto.commit.interval.ms", "1000");
+    consumerProperties.put("auto.commit.interval.ms", "8000");
     consumerProperties.put("session.timeout.ms", "30000");
     consumerProperties.put("key.deserializer",
             "org.apache.kafka.common.serialization.StringDeserializer");
     consumerProperties.put("value.deserializer",
             "org.apache.kafka.common.serialization.StringDeserializer");
+    
+    System.out.println("Consumer: " + StockDataConsumer.consumerCount);
+    StockDataConsumer.consumerCount++;
+    
     return new KafkaConsumer<>(consumerProperties);
-  }
-
-  public void runConsumerThread() {
-    runConsumerThread = true;
-
-    new Thread() {
-      @Override
-      public void run() {
-        while (runConsumerThread) {
-          pullStockData();
-        }
-      }
-    }.start();
   }
 
   public void runConsumerThread() {
@@ -183,7 +146,6 @@ public class StockDataConsumer {
 //    if (recordCount != 0) {
 //      System.out.println("Pulled size = " + recordCount);
 //    }
-
     for (ConsumerRecord<String, String> record : records) {
       //System.out.println("record: " + record);
       String symbol = record.key();
@@ -217,11 +179,9 @@ public class StockDataConsumer {
         // Add new data into the list
         stockData.add(new Stock(symbol, stockDateTime, stockDataValues));
       }
-      
+
       // Update stock values
-      synchronized (stockValues) {
-        stockValues.put(symbol, stockData);
-      }
+      stockValues.put(symbol, stockData);
     }
   }
 
@@ -236,11 +196,7 @@ public class StockDataConsumer {
    * @return A List&lt;Stock&lt; object containing the stock values in increasing time instance.
    */
   public List<Stock> getStockValues(String stockSymbol) {
-    List<Stock> returnValue;
-    synchronized (stockValues) {
-      returnValue = stockValues.getOrDefault(stockSymbol, new ArrayList<>());
-    }
-    return returnValue;
+    return stockValues.getOrDefault(stockSymbol, new ArrayList<Stock>());
   }
 
 }

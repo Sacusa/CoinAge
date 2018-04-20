@@ -188,11 +188,11 @@ public class StockDataProducer {
           }
           
           Map<String, Double> v = new HashMap<>();
-          v.put("open", r.nextDouble());
-          v.put("close", r.nextDouble());
-          v.put("high", r.nextDouble());
-          v.put("low", r.nextDouble());
-          v.put("volume", r.nextDouble());
+          v.put("open", 100 + 100*r.nextDouble());
+          v.put("close", 100 + 100*r.nextDouble());
+          v.put("high", 100 + 100*r.nextDouble());
+          v.put("low", 100 + 100*r.nextDouble());
+          v.put("volume", 100 + 100*r.nextDouble());
           
           Stock s = new Stock(symbol, gc, v);
           sampleData.add(s);

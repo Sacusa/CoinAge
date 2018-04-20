@@ -18,7 +18,7 @@
             });
 
             function loadData() {
-                $('#load_me').load('index.jsp', function() {
+                $('#load_me').load('DisplayTable.jsp?time=INTRADAY', function() {
                     if (reloadData != 0)
                         window.clearTimeout(reloadData);
                     reloadData = window.setTimeout(loadData, 1000)
