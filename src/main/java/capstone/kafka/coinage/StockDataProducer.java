@@ -1,5 +1,8 @@
 package capstone.kafka.coinage;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,8 +19,8 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 /**
- * This class gathers stock data for the required stock symbols. The data is then stored in an
- * ordered fashion for easy manipulation.
+ * This class gathers stock data for the required stock symbols. The data is
+ * then stored in an ordered fashion for easy manipulation.
  *
  * @author Sudhanshu Gupta
  */
@@ -40,14 +43,40 @@ public class StockDataProducer {
 
   // API key for AlphaVantage API.
   private final String apiKey;
-  
+
   // Boolean to stop the background producer thread.
   private boolean runProducerThread;
 
   public static void main(String[] args) {
-    StockDataProducer p = new StockDataProducer(Arrays.asList("MSFT", "GOOG"),
-            Arrays.asList("INTRADAY", "MONTHLY"), 1, "XS1YCFU15GDN1O6T");
+    List<String> listStocks = new ArrayList<>();
     
+    FileReader fileReader = null;
+    try {
+      String fileName = "D:\\programs\\java\\CoinAge-UI - Copy\\JSF_Login_Logout\\src\\main\\webapp\\resources\\text\\Stocks.txt";
+      String line = "";
+      
+      fileReader = new FileReader(fileName);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      
+      while((line = bufferedReader.readLine()) != null) {
+        listStocks.add(line.trim());
+      }
+      
+      bufferedReader.close();
+    } catch (FileNotFoundException ex) {
+      Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (IOException ex) {
+      Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+    } finally {
+      try {
+        fileReader.close();
+      } catch (IOException ex) {
+        Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+    
+    StockDataProducer p = new StockDataProducer(listStocks,
+              Arrays.asList("INTRADAY", "MONTHLY", "DAILY", "WEEKLY"), 1, "XS1YCFU15GDN1O6T");
     p.runDemoThread();
   }
 
@@ -55,7 +84,8 @@ public class StockDataProducer {
    * Initialize a StockDataProducer object.
    *
    * @param symbols List of stock symbols to store information about.
-   * @param timeSeries The time series to store information for (INTRADAILY,DAILY,MONTHLY,YEARLY).
+   * @param timeSeries The time series to store information for
+   * (INTRADAILY,DAILY,MONTHLY,YEARLY).
    * @param interval Time interval (in minutes) between each stock value.
    * @param apiKey API key for AlphaVantage API.
    */
@@ -69,12 +99,13 @@ public class StockDataProducer {
     this.apiKey = apiKey;
     this.runProducerThread = false;
   }
-  
+
   /**
-   * Returns an instance of KafkaProducer which is suitable for pushing data onto the Kafka
-   * instance running on localhost.
-   * 
-   * @return a KafkaProducer object for Kafka running on localhost and using String serde.
+   * Returns an instance of KafkaProducer which is suitable for pushing data
+   * onto the Kafka instance running on localhost.
+   *
+   * @return a KafkaProducer object for Kafka running on localhost and using
+   * String serde.
    */
   private Producer getKafkaProducer() {
     Properties producerProperties = new Properties();
@@ -90,10 +121,10 @@ public class StockDataProducer {
             "org.apache.kafka.common.serialization.StringSerializer");
     return new KafkaProducer<>(producerProperties);
   }
-  
+
   public void runProducerThread() {
     runProducerThread = true;
-    
+
     new Thread() {
       @Override
       public void run() {
@@ -130,11 +161,12 @@ public class StockDataProducer {
         List<Stock> apiResponse = null;
         try {
           apiResponse = new JsonParser().getLatestStock(apiQuery, symbol);
+          if (!apiResponse.isEmpty()) {
+            stockValues.put(symbol + "-" + time, apiResponse);
+          }
         } catch (IOException ex) {
           Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        stockValues.put(symbol + "-" + time, apiResponse);
       }
     }
   }
@@ -151,10 +183,10 @@ public class StockDataProducer {
       }
     }
   }
-  
+
   public void runDemoThread() {
     runProducerThread = true;
-    
+
     new Thread() {
       @Override
       public void run() {
@@ -171,38 +203,112 @@ public class StockDataProducer {
       }
     }.start();
   }
-  
+
   private void prepareSampleData() {
     Random r = new Random(System.currentTimeMillis());
     for (String symbol : symbols) {
       for (String time : timeSeries) {
-        List<Stock> sampleData = new ArrayList<>();
-        
-        for (int i = 0; i < 10; ++i) {
+        List<Stock> sampleData = stockValues.getOrDefault(symbol + "-" + time,
+                new ArrayList<Stock>());
+
+        if (sampleData.isEmpty()) {
+          for (int i = 0; i < 100; ++i) {
+            GregorianCalendar gc = null;
+            if (time.equals("INTRADAY")) {
+              gc = new GregorianCalendar(2018, 3, 28, i, i);
+            } else {
+              gc = new GregorianCalendar(2018, 3, 28);
+            }
+
+            Map<String, Double> v = new HashMap<>();
+            if (i == 0) {
+              v.put("open", 100 + 100 * r.nextDouble());
+              v.put("close", 100 + 100 * r.nextDouble());
+              v.put("high", 100 + 100 * r.nextDouble());
+              v.put("low", v.get("high") - 10);
+              v.put("volume", 100 + 100 * r.nextDouble());
+            } else {
+              Map<String, Double> lastV = sampleData.get(i - 1).getValues();
+
+              if (r.nextBoolean()) {
+                v.put("open", lastV.get("open") + 2 * r.nextDouble());
+              } else {
+                v.put("open", lastV.get("open") - 2 * r.nextDouble());
+              }
+
+              if (r.nextBoolean()) {
+                v.put("close", lastV.get("close") + 2 * r.nextDouble());
+              } else {
+                v.put("close", lastV.get("close") - 2 * r.nextDouble());
+              }
+
+              if (r.nextBoolean()) {
+                v.put("high", lastV.get("high") + 2 * r.nextDouble());
+              } else {
+                v.put("high", lastV.get("high") - 2 * r.nextDouble());
+              }
+
+              v.put("low", lastV.get("high") - 10 * r.nextDouble());
+
+              if (r.nextBoolean()) {
+                v.put("volume", lastV.get("volume") + 2 * r.nextDouble());
+              } else {
+                v.put("volume", lastV.get("volume") - 2 * r.nextDouble());
+              }
+            }
+
+            Stock s = new Stock(symbol, gc, v);
+            sampleData.add(s);
+          }
+        } else {
+          sampleData = sampleData.subList(1, 100);
+
           GregorianCalendar gc = null;
           if (time.equals("INTRADAY")) {
-            gc = new GregorianCalendar(2018, 3, 28, i, i);
-          }
-          else {
+            gc = new GregorianCalendar(2018, 3, 28, 0, 0);
+          } else {
             gc = new GregorianCalendar(2018, 3, 28);
           }
-          
+
           Map<String, Double> v = new HashMap<>();
-          v.put("open", 100 + 100*r.nextDouble());
-          v.put("close", 100 + 100*r.nextDouble());
-          v.put("high", 100 + 100*r.nextDouble());
-          v.put("low", 100 + 100*r.nextDouble());
-          v.put("volume", 100 + 100*r.nextDouble());
-          
+          Map<String, Double> lastV = sampleData.get(98).getValues();
+
+          if (r.nextBoolean()) {
+            v.put("open", lastV.get("open") + 2 * r.nextDouble());
+          } else {
+            v.put("open", lastV.get("open") - 2 * r.nextDouble());
+          }
+
+          if (r.nextBoolean()) {
+            v.put("close", lastV.get("close") + 2 * r.nextDouble());
+          } else {
+            v.put("close", lastV.get("close") - 2 * r.nextDouble());
+          }
+
+          if (r.nextBoolean()) {
+            v.put("high", lastV.get("high") + 2 * r.nextDouble());
+          } else {
+            v.put("high", lastV.get("high") - 2 * r.nextDouble());
+          }
+
+          v.put("low", lastV.get("high") - 10 * r.nextDouble());
+
+          if (r.nextBoolean()) {
+            v.put("volume", lastV.get("volume") + 2 * r.nextDouble());
+          } else {
+            v.put("volume", lastV.get("volume") - 2 * r.nextDouble());
+          }
+
           Stock s = new Stock(symbol, gc, v);
           sampleData.add(s);
         }
-        
+
         stockValues.put(symbol + "-" + time, sampleData);
+        System.out.println(sampleData.size());
       }
     }
   }
-  
+
   public void stopProducerThread() {
     runProducerThread = false;
   }

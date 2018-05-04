@@ -1,5 +1,10 @@
 package capstone.kafka.coinage;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -13,7 +18,8 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 
 /**
- * This class handles Kafka topology, connecting input streams to output streams.
+ * This class handles Kafka topology, connecting input streams to output
+ * streams.
  *
  * @author Sudhanshu Gupta
  */
@@ -23,8 +29,35 @@ public class StockKafkaStreams {
   private final KafkaStreams stockStreams;
 
   public static void main(String[] args) {
-    StockKafkaStreams stockStreams = new StockKafkaStreams(Arrays.asList("MSFT", "GOOG"),
-            Arrays.asList("INTRADAY", "MONTHLY"));
+    List<String> listStocks = new ArrayList<>();
+
+    FileReader fileReader = null;
+    try {
+      String fileName = "D:\\programs\\java\\CoinAge-UI - Copy\\JSF_Login_Logout\\src\\main\\webapp\\resources\\text\\Stocks.txt";
+      String line = "";
+
+      fileReader = new FileReader(fileName);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+      while ((line = bufferedReader.readLine()) != null) {
+        listStocks.add(line.trim());
+      }
+
+      bufferedReader.close();
+    } catch (FileNotFoundException ex) {
+      Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (IOException ex) {
+      Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+    } finally {
+      try {
+        fileReader.close();
+      } catch (IOException ex) {
+        Logger.getLogger(StockDataProducer.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+
+    StockKafkaStreams stockStreams = new StockKafkaStreams(listStocks,
+            Arrays.asList("INTRADAY", "DAILY", "WEEKLY", "MONTHLY"));
     stockStreams.run();
   }
 
@@ -40,7 +73,7 @@ public class StockKafkaStreams {
     props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
     props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-    
+
     // Build stream topology into a StreamsBuilder object
     final StreamsBuilder builder = new StreamsBuilder();
     for (String symbol : symbols) {

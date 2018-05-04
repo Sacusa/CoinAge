@@ -87,16 +87,16 @@ public class RegUser {
 
  */
     public String validateUsernamePassword() {
-               System.out.println("\naa\naa\naa\naa\naa\naa"+passwd+"\naa\naa\naa"+repass+"++++++++++\naa\naa\naa\naa");
-		 if (passwd.equals(repass)) {
+               System.out.println("\n"+passwd+"\na"+repass+"++");
+		 if (passwd.equals(repass) && passwd.length()>0) {
             if (username()) {
                 try {
                     Class.forName("com.mysql.jdbc.Driver");
                     Connection con = DriverManager.getConnection(
-                            "jdbc:mysql://localhost:3360/capstone", "root", "1234");
+                            "jdbc:mysql://localhost:3306/capstone?autoReconnect=true&useSSL=false", "root", "sacusa");
                     Statement statement = con.createStatement();
                     System.out.println("\naa\naa\naa\naa\naa\naa"+userName+"\naa\naa\naa\naa\naa\naa\naa");
-                    String Query2 = "insert into users values ('" + userName + "','" + passwd + "')";
+                    String Query2 = "insert into users values ('" + userName + "','" + passwd + "','')";
                     statement = con.createStatement();
                     statement.executeUpdate(Query2);
                     System.out.println("Database Updated Successfully");
@@ -108,10 +108,10 @@ public class RegUser {
                     return "";
                 }
             }
-              out="UserName alread exist";  
+              out="Username already exists";  
              return "";
         } else {
-            out="Password mismatch error";
+            out="Password mismatch error or Check the length of the password ";
             return "";
         }
 	}
@@ -123,13 +123,13 @@ public class RegUser {
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3360/capstone", "root", "1234");
+                    "jdbc:mysql://localhost:3306/capstone?autoReconnect=true&useSSL=false", "root", "sacusa");
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("select * from users where uname ='" + userName + "';");
             if (rs.next()) {
 
                 con.close();
-                out = "Username Already exist";
+                out = "Username already exists";
                 return false;
             } else {
 

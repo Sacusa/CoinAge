@@ -1,8 +1,3 @@
-<%-- 
-    Document   : DisplayTable
-    Created on : Apr 19, 2018, 10:56:58 PM
-    Author     : Sudhanshu Gupta
---%>
 
 <%@page import="java.util.Map"%>
 <%@page import="capstone.kafka.coinage.Stock"%>
@@ -66,8 +61,8 @@
         kafkaProducer.send(new ProducerRecord("db-query", username, "stocks;" + username));
       }
 
-      private String getResponse(Consumer kafkaConsumer, String username,String Stock) {
-        String response = Stock;
+      private String getResponse(Consumer kafkaConsumer, String username, String name) {
+        String response = name;
         boolean respondReceived = false;
 
         /*
@@ -89,48 +84,28 @@
         return response;
       }
 
-      private String getStocksString(String username,String stock) {
+      private String getStocksString(String username , String stock) {
         Producer kafkaProducer = getKafkaProducer();
         Consumer kafkaConsumer = getKafkaConsumer();
         kafkaConsumer.subscribe(Arrays.asList("db-response"));
         sendRequest(kafkaProducer, username);
-        return getResponse(kafkaConsumer, username,stock);
+        return getResponse(kafkaConsumer, username, stock);
       }
 
-      private List<String> getStocks(String username,String stock) {
+      private List<String> getStocks(String username , String stock) {
         return Arrays.asList(getStocksString(username,stock).split(","));
       }
     %>
-    <%!
-        String username;
-         String name;
-          List<String> stocks;
-          StockDataConsumer consumer ;
-             String time ;
-        %>
-    
-    <% 
-        if(request.getParameter("name") == null || request.getParameter("name") == "" )
-        {
-    %>
-    
-    <h2 class="text-center" style="color: red;">Subscribe to a Stock First</h2>
-    
-    <% }
-        else{
-    %>
-    
+
     <%
-      username = (String) session.getAttribute("username");
-        name = request.getParameter("name");
-     stocks = getStocks(username,name);
-       consumer = new StockDataConsumer(stocks,
+      String username = (String) session.getAttribute("username");
+      List<String> stocks = getStocks(username,request.getParameter("name"));
+      StockDataConsumer consumer = new StockDataConsumer(stocks,
               Arrays.asList("INTRADAY", "DAILY", "WEEKLY", "MONTHLY"));
       consumer.runConsumerThread();
-      time = request.getParameter("time").toUpperCase();
+      String time = request.getParameter("time").toUpperCase();
       System.out.println(username + "; " + stocks + "; " + time);
     %>
-    
     
     <table class="table table-striped">
       <tr>
@@ -141,8 +116,6 @@
         <th>Low</th>
         <th>Volume</th>
       </tr>
-   
-      
       <%
         for (String stock : stocks) {
           String symbol = stock + "-" + time;
@@ -153,7 +126,7 @@
           Map<String, Double> latestStockValues = stockData.get(stockData.size() - 1).getValues();
       %>
       <tr>
-          <td><a href="Stocks.jsp?name=<%= stock %>&time=<%= request.getParameter("time")  %>&subs=True"> <%= stock %></a></td>
+        <td><%= stock %></td>
         <td><%= latestStockValues.get("open") %></td>
         <td><%= latestStockValues.get("close") %></td>
         <td><%= latestStockValues.get("high") %></td>
@@ -163,9 +136,6 @@
       <%
         }
       %>
-       <% 
-    }
-    %>
     </table>
   </body>
 </html>

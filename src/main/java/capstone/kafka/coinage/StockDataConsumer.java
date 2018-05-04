@@ -1,5 +1,6 @@
 package capstone.kafka.coinage;
 
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
@@ -116,6 +117,7 @@ public class StockDataConsumer {
     consumerProperties.put("value.deserializer",
             "org.apache.kafka.common.serialization.StringDeserializer");
     
+    System.out.println("Consumer: " + StockDataConsumer.consumerCount);
     StockDataConsumer.consumerCount++;
     
     return new KafkaConsumer<>(consumerProperties);
